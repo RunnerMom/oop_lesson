@@ -11,8 +11,8 @@ KEYBOARD = None
 PLAYER = None
 ######################
 
-GAME_WIDTH = 6
-GAME_HEIGHT = 6
+GAME_WIDTH = 7
+GAME_HEIGHT = 7
 
 #### Put class definitions here ####
 
@@ -22,7 +22,8 @@ class Rock(GameElement):
 
 class Girl(GameElement):
     IMAGE = "Girl"
-
+    KEY = False
+    POWER = False
     def next_pos(self, direction):
         if direction == "up":
             return (self.x, self.y-1)
@@ -41,6 +42,9 @@ class Girl(GameElement):
 class Princess(GameElement):
     IMAGE = "Princess"
     SOLID = True
+    def interact(self, player):
+        player.POWER = True
+        GAME_BOARD.draw_msg("The princess gave you special powers!")
 
 class Boy(GameElement):
     IMAGE = "Boy"
@@ -58,37 +62,45 @@ class Gem(GameElement):
         player.inventory.append(self)
         GAME_BOARD.draw_msg("You just acquired a gem!  You have %d items!"%(len(player.inventory)))
 
+class Key(GameElement):
+    IMAGE = "Key"
+    SOLID = False
+    def interact(self, player):
+        player.inventory.append(self)
+        player.KEY = True
+        GAME_BOARD.draw_msg("You just picked up a key! You have %d items!"%(len(player.inventory)))
+
+class DoorOpen(GameElement):
+    IMAGE = "DoorOpen"
+    SOLID = False
+
+class DoorClosed(GameElement):
+    IMAGE = "DoorClosed"
+    SOLID = True
+    def interact(self, player):
+        if player.POWER and player.KEY:
+            GAME_BOARD.draw_msg("You opened the door!")
+            #SOLID = False
+            open_door = DoorOpen()
+            GAME_BOARD.register(open_door)
+            GAME_BOARD.set_el(self.x, self.y, open_door)
+
+        
+       # GAME_BOARD.draw_msg("You need a key!")
+
+
+    
 
 ####   End class definitions    ####
 
 def initialize():
     """Put game initialization code here"""
- #    #initialize and register rock 1
- #    rock = Rock()
- #    GAME_BOARD.register(rock)
- #    GAME_BOARD.set_el(1, 2, rock)
- #    print "The rock is at", (rock.x, rock.y)
-
- #    #initialize and register rock 2
- #    rock2 = Rock()
- #    GAME_BOARD.register(rock2)
- #    GAME_BOARD.set_el(2,1,rock2)
-
- #    #initialize and register rock 3
- #    rock3 = Rock()
- #    GAME_BOARD.register(rock3)
- #    GAME_BOARD.set_el(3,2, rock3)
-
- # #initialize and register rock 4
- #    rock4 = Rock()
- #    GAME_BOARD.register(rock4)
- #    GAME_BOARD.set_el(2,3, rock4)
 
     rock_positions = [
-        (2,2),
+        (4,6),
         (1,1),
-        (3,2),
-        (3,3)
+        (3,5),
+        (6,3)
     ]
     rocks = []
 
@@ -120,12 +132,21 @@ def initialize():
     GAME_BOARD.set_el(5,4, cindy)
     print cindy
 
-    GAME_BOARD.draw_msg("This game is wicked awesome.")
-    #GAME_BOARD.draw_msg("Board game.")
-
     gem = Gem()
     GAME_BOARD.register(gem)
-    GAME_BOARD.set_el(3, 1, gem)
+    GAME_BOARD.set_el(3, 3, gem)
+
+    key = Key()
+    GAME_BOARD.register(key)
+    GAME_BOARD.set_el(0,5, key)
+
+    closed_door = DoorClosed()
+    GAME_BOARD.register(closed_door)
+    GAME_BOARD.set_el(5,1, closed_door)
+
+
+    GAME_BOARD.draw_msg("This game is wicked awesome.")
+    #GAME_BOARD.draw_msg("Board game.")
 
     #This will return True if the up arrow key is being pressed
 
@@ -164,6 +185,7 @@ def keyboard_handler():
 # print PLAYER.next_pos("up")
 # print (PLAYER.x, PLAYER.y)
     if direction:
+        GAME_BOARD.erase_msg()
         next_location = PLAYER.next_pos(direction)
         next_x = next_location[0]
         next_y = next_location[1]
@@ -184,6 +206,8 @@ def keyboard_handler():
                 existing_el.interact(PLAYER)
 
             if existing_el is None or not existing_el.SOLID:
-                GAME_BOARD.erase_msg()
+               
                 GAME_BOARD.del_el(PLAYER.x, PLAYER.y)
                 GAME_BOARD.set_el(next_x, next_y, PLAYER)
+                for item in PLAYER.inventory: 
+                    print "%s" % item
