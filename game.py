@@ -92,6 +92,10 @@ class Princess(GameElement):
     def interact(self, player):         #this defines the interactions of the Princess with the player
         player.POWER = True             # The princess turns POWER to True
         GAME_BOARD.draw_msg("The princess gave you special powers!")
+#    def move(self):
+#        GAME_BOARD.del_el(self.x, self.y)   #we remove the player from her current position
+#        GAME_BOARD.set_el(0, 0, self)         # we re-set her position at 0,0
+
 
 class Heart(GameElement):
     IMAGE = "Heart"
@@ -228,10 +232,24 @@ def initialize():
     GAME_BOARD.draw_msg("This game is wicked awesome.")
 
 
- 
+def second_stage():
+    """
+    create a new game board if the player opens the door and crossed through
+    """
+    GAME_BOARD.draw_msg("Congrats! We are going to the second stage.")     
+    for x in range(GAME_WIDTH):
+        for y in range (GAME_HEIGHT):
+            GAME_BOARD.del_el(x, y) 
+    
+
 
 def keyboard_handler():
+
     direction=None
+
+    # Stage clear check
+    if (PLAYER.x, PLAYER.y) == (6,0):    
+        second_stage()
 
     if KEYBOARD[key.UP]:
         direction = "up"
@@ -319,14 +337,6 @@ def keyboard_handler():
                 GAME_BOARD.draw_msg("You need a gem to move the rocks!")     
 
 
-"""
-create a new game board if the player opens the door and crossed through
 
-"""
-if (PLAYER.x, PLAYER.y) == (6,0):
-    
-    for x in range(GAME_WIDTH):
-        for y in range (GAME_HEIGHT):
-            GAME_BOARD.del_el(x, y, GAME_BOARD.get_el(x,y))
 
 
