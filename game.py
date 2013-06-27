@@ -36,29 +36,30 @@ GAME_HEIGHT = 8
 #### Put class definitions here ####
 
 class Rock(GameElement):
-    # GLOBAL = Rock           # we need to do this so that we can call the position of the rock
     IMAGE = "Rock"
     SOLID = True
-    def interact(self,player):
-        pass
-        # if player.GEM:
-        # #     if direction == "right":
-        #         print "I am moving the rock to the right"
-     
-        # # if the girl is to the left of the rock, push the rock right.
-        #     if player 
-        
-        #     # if the girl is to the bottom of the rock, push the rock up.
-        #     # if the girl is above the rock, push the rock down
-        #     # if the girl is to the right of the rock, push the rock left.
+    def interact(self, player):         #this defines the interactions of the Rock with the player
+        if PLAYER.GEM: # checking to see if the player has a gem when running into rock      
+            nextrock_x = self.x + PLAYER.NEXT_X - PLAYER.x  #defining the rock move on x-axis      
+            nextrock_y = self.y + PLAYER.NEXT_Y - PLAYER.y  #defining the rock move on the y-axis
 
-        #     # direction == "up":
-        # #     # return (rock.x, rock.y-1)
 
-        #        GAME_BOARD.set_el(boy.x-1, boy.y, heart)    #the position of the hearts around the boy
-        # GAME_BOARD.set_el(boy.x+1, boy.y, heart)
-        # GAME_BOARD.set_el(boy.x, boy.y-1, heart)
-        # GAME_BOARD.set_el(boy.x, boy.y+1, heart)
+            if (not check_bound(nextrock_x, nextrock_y) or 
+                            GAME_BOARD.get_el(nextrock_x, nextrock_y)) :        #what to do if the player is running rock into another object
+                GAME_BOARD.draw_msg("Can't move there!")
+
+            else:                           #if the player has hit a key and we are still in the boundary, then do the following...
+
+                GAME_BOARD.del_el(self.x, self.y)        # deletes rock at current location
+                GAME_BOARD.set_el(nextrock_x, nextrock_y, self)    # moves rock to next location
+                GAME_BOARD.del_el(PLAYER.x, PLAYER.y)        # deletes player at current location
+                GAME_BOARD.set_el(PLAYER.NEXT_X, PLAYER.NEXT_Y, PLAYER)    # moves player to next location
+
+        else:    # telling player that gems are needed to move rock if player doesn't have the gem
+                GAME_BOARD.draw_msg("You need a gem to move the rocks!")     
+
+
+
 
 class Tree(GameElement):
     IMAGE = "ShortTree"
@@ -69,11 +70,12 @@ class Girl(GameElement):    #The girl is the main PLAYER in the game
     KEY = False             #We need to know if she has the key and the power
     POWER = False           #Initially, she has neither of them
     GEM = False
+    NEXT_X = None
+    NEXT_Y = None
+
     def next_pos(self, direction):      #this function defines the movement of the player
         if direction == "up":
-            return (self.x, self.y-1)   #moves up one, by subtracting from the y coordinate
-                                        #(X,Y) is a tuple
-
+            return (self.x, self.y-1)   #moves up one, by subtracting from the y coordinate. (X,Y) is a tuple.
         elif direction == "down":
             return (self.x, self.y+1)   #moves down one, by adding from the y coordinate
         elif direction == "left":
@@ -82,7 +84,7 @@ class Girl(GameElement):    #The girl is the main PLAYER in the game
             return (self.x+1, self.y)   #moves right by adding from the x coordinate
         return None  
 
-    def __init__(self):                 #why do we need this?
+    def __init__(self):                 # every class has a default init. If you want to change the Init, you define it here.
         GameElement.__init__(self)
         self.inventory = []             #creates empty inventory list
 
@@ -92,10 +94,6 @@ class Princess(GameElement):
     def interact(self, player):         #this defines the interactions of the Princess with the player
         player.POWER = True             # The princess turns POWER to True
         GAME_BOARD.draw_msg("The princess gave you special powers!")
-#    def move(self):
-#        GAME_BOARD.del_el(self.x, self.y)   #we remove the player from her current position
-#        GAME_BOARD.set_el(0, 0, self)         # we re-set her position at 0,0
-
 
 class Heart(GameElement):
     IMAGE = "Heart"
@@ -155,12 +153,8 @@ class DoorClosed(GameElement):
         else:
             GAME_BOARD.draw_msg("You need a key and special powers to enter this door")
         
-       # GAME_BOARD.draw_msg("You need a key!")
+
     
-
-
-
-
 
 ####   End class definitions    ####
 
@@ -211,7 +205,6 @@ def initialize():
     GAME_BOARD.register(cindy)
     GAME_BOARD.set_el(5,4, cindy)
    
-
     gem = Gem()
     GAME_BOARD.register(gem)
     GAME_BOARD.set_el(3, 3, gem)
@@ -224,12 +217,7 @@ def initialize():
     GAME_BOARD.register(closed_door)
     GAME_BOARD.set_el(6,1, closed_door)
 
-    # heart = Heart()
-    # GAME_BOARD.register(heart)
-    # GAME_BOARD.set_el(0,0, heart)
-    # GAME_BOARD.del_el(heart.x, heart.y)
-
-    GAME_BOARD.draw_msg("This game is wicked awesome.")
+    GAME_BOARD.draw_msg("This game is groovy, man.")
 
 
 def second_stage():
@@ -240,7 +228,21 @@ def second_stage():
     for x in range(GAME_WIDTH):
         for y in range (GAME_HEIGHT):
             GAME_BOARD.del_el(x, y) 
-    
+
+def check_bound(next_x,next_y):
+    """
+    check if the position is out of boundary
+    """
+    if next_x >= GAME_WIDTH or next_x<0:            #what to do if the player moves outside the boundary
+        GAME_BOARD.draw_msg("Can't move there!")
+        return False
+                                                    #don't move the player at all
+    elif next_y >= GAME_HEIGHT or next_y<0:
+        GAME_BOARD.draw_msg("Can't move there!")
+        return False
+
+    return True
+
 
 
 def keyboard_handler():
@@ -253,49 +255,27 @@ def keyboard_handler():
 
     if KEYBOARD[key.UP]:
         direction = "up"
-    #     GAME_BOARD.draw_msg("You pressed up")
-    #     next_y = PLAYER.y -1
-    #     GAME_BOARD.del_el(PLAYER.x, PLAYER.y)
-    #     GAME_BOARD.set_el(PLAYER.x, next_y, PLAYER)
+
     elif KEYBOARD[key.DOWN]:
         direction = "down"
-    #     GAME_BOARD.draw_msg("You pressed down")
-    #     next_y = PLAYER.y +1
-    #     GAME_BOARD.del_el(PLAYER.x, PLAYER.y)
-    #     GAME_BOARD.set_el(PLAYER.x, next_y, PLAYER)
+
     elif KEYBOARD[key.LEFT]:
         direction = "left"
-    #     GAME_BOARD.draw_msg
-    #     ("You pressed left")
-    #     next_x = PLAYER.x -1
-    #     GAME_BOARD.del_el(PLAYER.x, PLAYER.y)
-    #     GAME_BOARD.set_el(next_x, PLAYER.y, PLAYER)
-    elif KEYBOARD[key.RIGHT]:                       #Right function in key method
+   
+    elif KEYBOARD[key.RIGHT]:                   
         direction = "right"
-    #     GAME_BOARD.draw_msg("You pressed right")
-    #     next_x = PLAYER.x +1
-    #     GAME_BOARD.del_el(PLAYER.x, PLAYER.y)
-    #     GAME_BOARD.set_el(next_x, PLAYER.y, PLAYER)
-    # elif KEYBOARD[key.SPACE]:
-    #     GAME_BOARD.erase_msg()
 
     if direction:                       # if the player has hit a direction key
         GAME_BOARD.erase_msg()          # erase the last message displayed
         next_location = PLAYER.next_pos(direction)      #call the next_pos function defined in Player Class and set that to next_location
-        next_x = next_location[0]         # the first element in the tuple is the X coordinate
-        next_y = next_location[1]         # the 2nd element in the tuple is the y coordinate.
+        PLAYER.NEXT_X = next_location[0]         # the first element in the tuple is the X coordinate
+        PLAYER.NEXT_Y = next_location[1]         # the 2nd element in the tuple is the y coordinate.
 
-        if next_x >= GAME_WIDTH or next_x<0:            #what to do if the player moves outside the boundary
-            GAME_BOARD.draw_msg("Can't move there!")
-                                                        #don't move the player at all
 
-        elif next_y >= GAME_HEIGHT or next_y<0:
-            GAME_BOARD.draw_msg("Can't move there!")
-          
+        if check_bound(PLAYER.NEXT_X, PLAYER.NEXT_Y) :         
+ #if the player has hit a key and we are still in the boundary, then do the following...
 
-        else:                           #if the player has hit a key and we are still in the boundary, then do the following...
-
-            existing_el = GAME_BOARD.get_el(next_x, next_y)  # get_el will return a list, existing_el will contain the class of object
+            existing_el = GAME_BOARD.get_el(PLAYER.NEXT_X, PLAYER.NEXT_Y)  # get_el will return a list, existing_el will contain the class of object
             
 # determine which way the player moved by calculating next_x-PLAYER.x (the next square for the player minus the current square)
 # the direction that the player moves in each axis is either +1 or -1. We can
@@ -308,35 +288,5 @@ def keyboard_handler():
             if existing_el is None or not existing_el.SOLID: # if there's nothing in the next location or if there 
                                                              # is a non-solid object
                 GAME_BOARD.del_el(PLAYER.x, PLAYER.y)        # deletes player at current location
-                GAME_BOARD.set_el(next_x, next_y, PLAYER)    # moves player to next location
+                GAME_BOARD.set_el(PLAYER.NEXT_X, PLAYER.NEXT_Y, PLAYER)    # moves player to next location
  
-
-            elif existing_el.IMAGE == "Rock" and PLAYER.GEM: # checking to see if the player has a gem when running into rock      
-                nextrock_x = existing_el.x + next_x - PLAYER.x  #defining the rock move on x-axis      
-                nextrock_y = existing_el.y + next_y - PLAYER.y  #definning the rock move on the y-axis
-#### check for boundary of game
-#####
-                if nextrock_x >= GAME_WIDTH or nextrock_x<0:            #what to do if the player attempts to move rock outside the boundary of x-axis
-                            GAME_BOARD.draw_msg("Can't move there!")  
-                            
-
-                elif nextrock_y >= GAME_HEIGHT or nextrock_y<0:         #what to do if the player attempts to move rock outside bounder of y-axis
-                    GAME_BOARD.draw_msg("Can't move there!")
-
-                elif GAME_BOARD.get_el(nextrock_x, nextrock_y) :        #what to do if the player is running rock into another object
-                    GAME_BOARD.draw_msg("Can't move there!")
-
-                else:                           #if the player has hit a key and we are still in the boundary, then do the following...
-
-                    GAME_BOARD.del_el(existing_el.x, existing_el.y)        # deletes rock at current location
-                    GAME_BOARD.set_el(nextrock_x, nextrock_y, existing_el)    # moves rock to next location
-                    GAME_BOARD.del_el(PLAYER.x, PLAYER.y)        # deletes player at current location
-                    GAME_BOARD.set_el(next_x, next_y, PLAYER)    # moves player to next location
-
-            elif existing_el.IMAGE == "Rock" and not PLAYER.GEM:    # telling player that gems are needed to move rock if player doesn't have the gem
-                GAME_BOARD.draw_msg("You need a gem to move the rocks!")     
-
-
-
-
-
